@@ -13,7 +13,7 @@ export function renderHeader() {
       <button class="mobile-menu-btn" id="mobile-menu-toggle">
         ☰
       </button>
-      <h1 class="header-title" id="page-title">ダッシュボード</h1>
+      <h1 class="header-title" id="page-title">家計簿</h1>
       <span class="header-today-date" style="font-size: 0.9rem; color: var(--text-muted); padding-left: 1rem; border-left: 1px solid var(--border-color);">
         本日: ${formattedDate}
       </span>

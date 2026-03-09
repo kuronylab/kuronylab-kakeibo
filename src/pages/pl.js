@@ -9,7 +9,7 @@ export function renderPL() {
   container.innerHTML = `
     <div class="card mb-lg">
       <div class="card-header">
-        <h3 class="card-title">損益計算書 (P/L) - ${store.state.currentYear}年度</h3>
+        <h3 class="card-title">収支レポート - ${store.state.currentYear}年度</h3>
         <button class="btn btn-secondary btn-sm" id="btn-export-pl">CSVエクスポート</button>
       </div>
       
@@ -48,8 +48,8 @@ export function onPLMount() {
         const debit = store.getAccountByCode(tx.debitAccount);
         const credit = store.getAccountByCode(tx.creditAccount);
 
-        if (credit && credit.category === 'revenue') salesAmount += tx.amount;
-        if (debit && debit.category === 'revenue') salesAmount -= tx.amount;
+        if (credit && credit.category === 'income') salesAmount += tx.amount;
+        if (debit && debit.category === 'income') salesAmount -= tx.amount;
         if (debit && debit.code === '5001') costOfSales += tx.amount;
         if (credit && credit.code === '5001') costOfSales -= tx.amount;
 
@@ -70,20 +70,20 @@ export function onPLMount() {
         .sort((a, b) => b.amount - a.amount);
 
       const data = [
-        { '項目': 'Ⅰ 売上高', '金額': salesAmount },
-        { '項目': 'Ⅱ 売上原価（仕入高）', '金額': costOfSales },
-        { '項目': '売上総利益（粗利）', '金額': grossProfit },
-        { '項目': 'Ⅲ 経費（販売費及び一般管理費）', '金額': '' }
+        { '項目': 'Ⅰ 収入合計', '金額': salesAmount },
+        { '項目': 'Ⅱ 特別な支出 / 仕入', '金額': costOfSales },
+        { '項目': '差引利益', '金額': grossProfit },
+        { '項目': 'Ⅲ 常時支出（生活費・固定費等）', '金額': '' }
       ];
 
       activeExpenses.forEach(exp => {
         data.push({ '項目': `  ${exp.name}`, '金額': exp.amount });
       });
 
-      data.push({ '項目': '経費合計', '金額': totalExpense });
-      data.push({ '項目': '青色申告特別控除前の所得金額', '金額': operatingProfit });
+      data.push({ '項目': '支出合計', '金額': totalExpense });
+      data.push({ '項目': '当期純収支', '金額': operatingProfit });
 
-      exportToCSV(data, `損益計算書_${currentYear}年`);
+      exportToCSV(data, `収支レポート_${currentYear}年`);
     });
   }
 }
@@ -109,12 +109,12 @@ async function updatePLUI() {
     const debit = store.getAccountByCode(tx.debitAccount);
     const credit = store.getAccountByCode(tx.creditAccount);
 
-    // 売上の計上 (貸方が収益)
-    if (credit && credit.category === 'revenue') {
+    // 収入の計上 (貸方が収入)
+    if (credit && credit.category === 'income') {
       salesAmount += tx.amount;
     }
-    // 売上の取消等 (借方が収益)
-    if (debit && debit.category === 'revenue') {
+    // 収入の取消等 (借方が収入)
+    if (debit && debit.category === 'income') {
       salesAmount -= tx.amount;
     }
 
@@ -153,38 +153,38 @@ async function updatePLUI() {
   `).join('');
 
   const html = `
-    <!-- 売上高 -->
+    <!-- 収入 -->
     <div class="statement-row">
-      <div class="statement-label font-bold text-primary">Ⅰ 売上高</div>
+      <div class="statement-label font-bold text-primary">Ⅰ 収入合計</div>
       <div class="statement-amount text-emerald">${formatCurrency(salesAmount)}</div>
     </div>
     
-    <!-- 売上原価 -->
+    <!-- 特別な支出 -->
     <div class="statement-row mt-md">
-      <div class="statement-label font-bold text-primary">Ⅱ 売上原価（仕入高）</div>
+      <div class="statement-label font-bold text-primary">Ⅱ 特別な支出（大型購入など）</div>
       <div class="statement-amount text-rose">${formatCurrency(costOfSales)}</div>
     </div>
     
-    <!-- 売上総利益 -->
+    <!-- 収支 -->
     <div class="statement-row total mb-md">
-      <div class="statement-label font-bold text-primary">売上総利益（粗利）</div>
+      <div class="statement-label font-bold text-primary">差引収支</div>
       <div class="statement-amount text-primary font-bold">${formatCurrency(grossProfit)}</div>
     </div>
     
-    <!-- 販売費及び一般管理費 -->
+    <!-- 生活費・固定費 -->
     <div class="statement-row mt-lg">
-      <div class="statement-label font-bold text-primary">Ⅲ 経費（販売費及び一般管理費）</div>
+      <div class="statement-label font-bold text-primary">Ⅲ 生活費・固定費</div>
       <div class="statement-amount"></div>
     </div>
-    ${expensesHtml || '<div class="statement-row indent text-muted">経費の計上はありません</div>'}
+    ${expensesHtml || '<div class="statement-row indent text-muted">支出の計上はありません</div>'}
     <div class="statement-row total indent mt-0 mb-md">
-      <div class="statement-label">経費合計</div>
+      <div class="statement-label">支出合計</div>
       <div class="statement-amount text-rose font-bold">${formatCurrency(totalExpense)}</div>
     </div>
     
-    <!-- 青色申告控除前所得金額 -->
+    <!-- 当期純収支 -->
     <div class="statement-row grand-total mt-xl">
-      <div class="statement-label">青色申告特別控除前の所得金額</div>
+      <div class="statement-label">今期の純収支</div>
       <div class="statement-amount">${formatCurrency(operatingProfit)}</div>
     </div>
   `;

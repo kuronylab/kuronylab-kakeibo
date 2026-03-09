@@ -10,11 +10,10 @@ export function renderSettings() {
   const generateAccountOptions = (selectedCode) => {
     let options = '';
     const groups = {
-      'revenue': '収益 (売上など)',
-      'expense': '費用 (経費など)',
+      'income': '収入',
+      'expense': '支出',
       'asset': '資産 (現金・預金など)',
-      'liability': '負債 (借入金・クレカなど)',
-      'equity': '純資産 (元入金など)'
+      'liability': '負債 (借入金・クレカなど)'
     };
 
     for (const [category, label] of Object.entries(groups)) {
@@ -36,43 +35,18 @@ export function renderSettings() {
 
   container.innerHTML = `
     <div class="grid-2">
-      <!-- 事業者設定 -->
+      <!-- 基本設定 -->
       <div class="card settings-card">
-        <h3 class="settings-section-title">事業者設定</h3>
+        <h3 class="settings-section-title">基本設定</h3>
         <form id="settings-form">
           <div class="form-group">
-            <label class="form-label">事業所名 (屋号)</label>
-            <input type="text" id="set-business-name" class="form-input" placeholder="例: KURONYLAB">
-          </div>
-          
-          <div class="form-group">
-            <label class="form-label">事業主名</label>
+            <label class="form-label">表示名</label>
             <input type="text" id="set-taxpayer-name" class="form-input" placeholder="例: 黒木 皓基">
           </div>
           
           <div class="form-group">
-            <label class="form-label">業種・事業内容</label>
-            <input type="text" id="set-industry-type" class="form-input" placeholder="例: EC販売の受託業務">
-          </div>
-          
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">申告方法</label>
-              <select id="set-tax-return" class="form-select">
-                <option value="blue">青色申告</option>
-                <option value="white">白色申告</option>
-              </select>
-            </div>
-            
-            <div class="form-group">
-              <label class="form-label">青色申告特別控除額</label>
-              <select id="set-blue-deduction" class="form-select">
-                <option value="650000">65万円 (e-Tax)</option>
-                <option value="550000">55万円</option>
-                <option value="100000">10万円</option>
-                <option value="0">なし (白色など)</option>
-              </select>
-            </div>
+            <label class="form-label">家計簿タイトル</label>
+            <input type="text" id="set-business-name" class="form-input" placeholder="例: 黒木家の家計簿">
           </div>
           
           <button type="button" class="btn btn-primary mt-md" id="btn-save-settings">設定を保存する</button>
@@ -155,36 +129,7 @@ export function renderSettings() {
               <datalist id="sub-tags-list"></datalist>
             </div>
           </div>
-          <!-- 家事按分UI (サブスク) -->
-          <div id="sub-apportionment-hint" class="text-xs text-muted mb-sm" style="border-top: 1px dashed var(--border-color); padding-top: var(--spacing-sm); margin-top: var(--spacing-sm);">
-            ※ 借方に費用科目（5xxx）を選択すると、家事按分の設定が表示されます
-          </div>
-          <div class="form-group" id="sub-apportionment-section" style="display: none; border-top: 1px dashed var(--border-color); padding-top: var(--spacing-sm); margin-top: var(--spacing-sm);">
-            <label class="form-label font-bold text-primary" style="font-size: 0.85rem;">⚖️ 家事按分・事業利用設定</label>
-            
-            <div class="form-row">
-                <div class="form-group w-1/2">
-                    <label class="form-label" style="font-size: 0.75rem;">利用区分</label>
-                    <select id="sub-usage-type" class="form-select">
-                        <option value="business_only" selected>100% 事業用</option>
-                        <option value="mixed">家事按分（混在）</option>
-                        <option value="private_only">100% 私用（全額除外）</option>
-                    </select>
-                </div>
-                
-                <div class="form-group w-1/2" id="sub-ratio-group" style="display: none;">
-                    <label class="form-label" style="font-size: 0.75rem;">事業利用割合 (%)</label>
-                    <input type="number" id="sub-business-ratio" class="form-input" min="0" max="100" value="100">
-                </div>
-            </div>
-            
-            <div id="sub-apportionment-details" style="display: none; background: var(--bg-color); padding: var(--spacing-sm); border-radius: var(--border-radius-sm); margin-bottom: var(--spacing-sm);">
-                <div class="form-group mb-0">
-                    <label class="form-label text-xs">按分根拠メモ <span class="text-rose">*</span></label>
-                    <input type="text" id="sub-apportionment-memo" class="form-input text-sm" placeholder="例: AIツール開発や顧客対応に利用。私的利用も含むため事業割合80%とする">
-                </div>
-            </div>
-          </div>
+          <!-- 家事按分UI (サブスク) 削除 -->
 
           <div class="flex gap-sm mt-sm">
             <button type="button" class="btn btn-secondary" id="btn-cancel-edit-subscription" style="display: none;">入力をクリア</button>
@@ -238,10 +183,6 @@ export function onSettingsMount() {
 
     setVal('set-business-name', settings.businessName || '');
     setVal('set-taxpayer-name', settings.taxpayerName || '');
-    setVal('set-industry-type', settings.industryType || '');
-    setVal('set-tax-return', settings.taxReturnMethod || 'blue');
-    setVal('set-blue-deduction', settings.blueReturnDeduction || '650000');
-    setVal('set-fixed-rate', settings.fixedRatePerStore || 10000);
   };
 
   const unsubscribe = store.subscribe(() => {
@@ -259,11 +200,7 @@ export function onSettingsMount() {
       const newSettings = {
         ...store.state.settings,
         businessName: document.getElementById('set-business-name').value,
-        taxpayerName: document.getElementById('set-taxpayer-name').value,
-        industryType: document.getElementById('set-industry-type').value,
-        taxReturnMethod: document.getElementById('set-tax-return').value,
-        blueReturnDeduction: parseInt(document.getElementById('set-blue-deduction').value, 10),
-        fixedRatePerStore: parseInt(document.getElementById('set-fixed-rate').value, 10) || 10000
+        taxpayerName: document.getElementById('set-taxpayer-name').value
       };
 
       try {
@@ -440,48 +377,8 @@ export function onSettingsMount() {
   // 初期データがない可能性もあるので少し待ってから実行（または store にデータがあればそれを使う）
   setTimeout(setupAutocomplete, 500);
 
-  // --- サブスク按分UI制御ロジック ---
-  const subDebitSelect = document.getElementById('sub-debit');
-  const subApportSection = document.getElementById('sub-apportionment-section');
-  const subUsageSelect = document.getElementById('sub-usage-type');
-  const subRatioGroup = document.getElementById('sub-ratio-group');
-  const subRatioInput = document.getElementById('sub-business-ratio');
-  const subDetailsDiv = document.getElementById('sub-apportionment-details');
-
-  const subApportHint = document.getElementById('sub-apportionment-hint');
-
-  const updateSubApportionmentUI = () => {
-    if (!subDebitSelect || !subApportSection) return;
-
-    const isExpense = subDebitSelect.value.startsWith('5');
-    subApportSection.style.display = isExpense ? 'block' : 'none';
-    if (subApportHint) subApportHint.style.display = isExpense ? 'none' : 'block';
-
-    if (!isExpense) return;
-
-    const usage = subUsageSelect.value;
-    if (usage === 'business_only') {
-      subRatioGroup.style.display = 'none';
-      subDetailsDiv.style.display = 'none';
-      subRatioInput.value = 100;
-    } else if (usage === 'private_only') {
-      subRatioGroup.style.display = 'none';
-      subDetailsDiv.style.display = 'block';
-      subRatioInput.value = 0;
-    } else if (usage === 'mixed') {
-      subRatioGroup.style.display = 'block';
-      subDetailsDiv.style.display = 'block';
-    }
-  };
-
-  if (subDebitSelect) {
-    subDebitSelect.addEventListener('change', updateSubApportionmentUI);
-    subDebitSelect.addEventListener('input', updateSubApportionmentUI);
-  }
-  if (subUsageSelect) subUsageSelect.addEventListener('change', updateSubApportionmentUI);
-
-  // 初期化時に一度実行
-  updateSubApportionmentUI();
+  // サブスク按分UI制御ロジック削除
+  const updateSubApportionmentUI = () => { };
 
   // サブスク登録・更新フォーム
   const subForm = document.getElementById('subscription-form');
@@ -516,29 +413,7 @@ export function onSettingsMount() {
 
       const isEditing = !!subForm.dataset.editingId;
 
-      let usageType = 'business_only';
-      let businessUseRatio = 100;
-      let apportionmentMethod = 'fixed_ratio';
-      let apportionmentMemo = '';
-
-      if (debitAccount.startsWith('5')) {
-        usageType = document.getElementById('sub-usage-type').value;
-        if (usageType === 'mixed') {
-          businessUseRatio = Number(document.getElementById('sub-business-ratio').value);
-          apportionmentMemo = document.getElementById('sub-apportionment-memo').value.trim();
-          if (!apportionmentMemo && businessUseRatio !== 100 && businessUseRatio !== 0) {
-            import('../components/toast.js').then(({ showToast }) => {
-              showToast('家事按分の場合、按分根拠メモは必須です', 'error');
-            });
-            submitBtn.disabled = false;
-            return;
-          }
-        } else if (usageType === 'private_only') {
-          businessUseRatio = 0;
-          apportionmentMemo = document.getElementById('sub-apportionment-memo').value.trim();
-        }
-      }
-
+      // 家事按分UI (サブスク) 削除
       try {
         const subData = {
           dayOfMonth,
@@ -549,12 +424,7 @@ export function onSettingsMount() {
           description,
           tags,
           startMonth,
-          endMonth,
-          usageType,
-          businessUseRatio,
-          apportionmentMethod,
-          apportionmentMemo,
-          apportionmentOffsetAccountCode: '1005'
+          endMonth
         };
 
         if (isEditing) {

@@ -34,10 +34,10 @@ export function renderTransactions() {
     
     <div class="templates-bar" style="display: flex; gap: 0.5rem; margin-bottom: var(--spacing-md); overflow-x: auto; padding-bottom: 0.5rem;">
       <span class="text-xs text-muted" style="white-space: nowrap; line-height: 28px;">テンプレート:</span>
-      <button class="btn btn-ghost btn-sm btn-template" data-debit="1002" data-credit="4001" data-desc="業務委託費入金" data-partner="YourLife株式会社">💰 報酬入金(YourLife)</button>
-      <button class="btn btn-ghost btn-sm btn-template" data-debit="5003" data-credit="1001" data-desc="ツール利用料" data-partner="OpenAI">🌐 ChatGPT (現金)</button>
-      <button class="btn btn-ghost btn-sm btn-template" data-debit="5003" data-credit="2002" data-desc="サーバー代" data-partner="AWS">☁️ サーバー代 (未払金)</button>
-      <button class="btn btn-ghost btn-sm btn-template" data-debit="5006" data-credit="1001" data-desc="事務用品購入">📝 消耗品 (現金)</button>
+      <button class="btn btn-ghost btn-sm btn-template" data-debit="1002" data-credit="4001" data-desc="給料振込">💰 給与受取</button>
+      <button class="btn btn-ghost btn-sm btn-template" data-debit="5001" data-credit="1002" data-desc="ドラッグストア購入">🛒 日料品購入</button>
+      <button class="btn btn-ghost btn-sm btn-template" data-debit="5003" data-credit="1002" data-desc="家賃支払い">🏠 家賃 (銀行振込)</button>
+      <button class="btn btn-ghost btn-sm btn-template" data-debit="5013" data-credit="1002" data-desc="Netflixサブスク">📺 サブスク決済</button>
     </div>
     
     <div class="card">
@@ -175,8 +175,8 @@ async function handleCSVImport(e) {
           // ここでは一律「未設定」のような処理にするか、売上・仕入に仮割り当てする
           const isIncome = row['入金金額'] || (row['金額'] && parseInt(row['金額'], 10) > 0);
 
-          const debitAccount = isIncome ? '1001' : '5001'; // 入金なら現金、出金なら仕入(仮)
-          const creditAccount = isIncome ? '4001' : '1001'; // 入金なら売上、出金なら現金
+          const debitAccount = isIncome ? '1001' : '5001'; // 入金なら現金、出金なら支出(仮)
+          const creditAccount = isIncome ? '4001' : '1001'; // 入金なら収入、出金なら現金
 
           const txData = {
             id: generateId(),
@@ -260,7 +260,7 @@ function updateTransactionsUI() {
       <tr ${tx.isApportionmentAdjustment ? 'style="background: rgba(244, 63, 94, 0.05);"' : ''}>
         <td class="date">${tx.date}</td>
         <td><span class="badge ${store.getAccountByCode(tx.debitAccount)?.category === 'expense' ? 'badge-expense' : 'badge-asset'}">${debitName}</span></td>
-        <td><span class="badge ${store.getAccountByCode(tx.creditAccount)?.category === 'revenue' ? 'badge-income' : 'badge-asset'}">${creditName}</span></td>
+        <td><span class="badge ${store.getAccountByCode(tx.creditAccount)?.category === 'income' ? 'badge-income' : 'badge-asset'}">${creditName}</span></td>
         <td>${tx.description || ''}${apportionBadge}</td>
         <td>${tx.partner || '-'}</td>
         <td>${tx.tags ? tx.tags.split(',').map(tag => `<span class="badge" style="background: var(--bg-card-hover); color: var(--text-color); margin-right: 2px;">${tag.trim()}</span>`).join('') : '-'}</td>
@@ -364,8 +364,8 @@ function openTransactionModal(existingTx = null) {
       asset: { label: '資産', options: [] },
       liability: { label: '負債', options: [] },
       equity: { label: '純資産', options: [] },
-      revenue: { label: '収益 (売上)', options: [] },
-      expense: { label: '費用 (経費)', options: [] }
+      income: { label: '収入', options: [] },
+      expense: { label: '支出', options: [] }
     };
 
     accounts.forEach(acc => {
@@ -433,40 +433,9 @@ function openTransactionModal(existingTx = null) {
       </div>
 
       <div class="form-group">
-        <label class="form-label">タグ / プロジェクト <span class="text-sm text-muted">(任意・カンマ区切り)</span></label>
-        <input type="text" id="tx-tags" class="form-input" list="tx-tags-list" value="${existingTx ? (existingTx.tags || '') : ''}" placeholder="例: 物販事業, YouTube">
+        <label class="form-label">タグ / 分類 <span class="text-sm text-muted">(任意・カンマ区切り)</span></label>
+        <input type="text" id="tx-tags" class="form-input" list="tx-tags-list" value="${existingTx ? (existingTx.tags || '') : ''}" placeholder="例: 固定費, 贅沢品">
         <datalist id="tx-tags-list"></datalist>
-      </div>
-
-      <!-- 家事按分UI -->
-      <div class="form-group" id="tx-apportionment-section" style="display: none; border-top: 1px dashed var(--border-color); padding-top: var(--spacing-md); margin-top: var(--spacing-md);">
-        <label class="form-label font-bold text-primary">⚖️ 家事按分・事業利用設定</label>
-        
-        <div class="form-row">
-            <div class="form-group w-1/2">
-                <label class="form-label">利用区分</label>
-                <select id="tx-usage-type" class="form-select">
-                    <option value="business_only" ${existingTx && existingTx.usageType === 'business_only' ? 'selected' : (!existingTx ? 'selected' : '')}>100% 事業用</option>
-                    <option value="mixed" ${existingTx && existingTx.usageType === 'mixed' ? 'selected' : ''}>家事按分（混在）</option>
-                    <option value="private_only" ${existingTx && existingTx.usageType === 'private_only' ? 'selected' : ''}>100% 私用（全額除外）</option>
-                </select>
-            </div>
-            
-            <div class="form-group w-1/2" id="tx-ratio-group" style="display: none;">
-                <label class="form-label">事業利用割合 (%)</label>
-                <input type="number" id="tx-business-ratio" class="form-input" min="0" max="100" value="${existingTx && existingTx.businessUseRatio !== undefined ? existingTx.businessUseRatio : 100}">
-            </div>
-        </div>
-        
-        <div id="tx-apportionment-details" style="display: none; background: var(--bg-color); padding: var(--spacing-sm); border-radius: var(--border-radius-sm); margin-bottom: var(--spacing-md);">
-            <div class="text-sm flex justify-between mb-xs"><span>按分後 経費計上額:</span> <span id="tx-calc-business-amount" class="font-bold">0円</span></div>
-            <div class="text-sm flex justify-between text-rose"><span>家事按分 除外額 (調整仕訳):</span> <span id="tx-calc-private-amount" class="font-bold">0円</span></div>
-            
-            <div class="form-group mt-sm mb-0">
-                <label class="form-label text-xs">按分根拠メモ <span class="text-rose">*</span></label>
-                <input type="text" id="tx-apportionment-memo" class="form-input text-sm" placeholder="例: KURONYLABのAIツール開発等に利用。私的利用も含むため事業割合80%とする" value="${existingTx ? (existingTx.apportionmentMemo || '') : ''}">
-            </div>
-        </div>
       </div>
     </form>
     
@@ -490,60 +459,9 @@ function openTransactionModal(existingTx = null) {
     footer: footerHtml
   });
 
-  // --- 按分UI制御ロジック ---
+  // 家事按分UI制御ロジック削除
   setTimeout(() => {
-    const debitSelect = document.getElementById('tx-debit');
-    const amountInput = document.getElementById('tx-amount');
-    const apportSection = document.getElementById('tx-apportionment-section');
-    const usageSelect = document.getElementById('tx-usage-type');
-    const ratioGroup = document.getElementById('tx-ratio-group');
-    const ratioInput = document.getElementById('tx-business-ratio');
-    const detailsDiv = document.getElementById('tx-apportionment-details');
-    const calcBiz = document.getElementById('tx-calc-business-amount');
-    const calcPriv = document.getElementById('tx-calc-private-amount');
-
-    const updateApportionmentUI = () => {
-      if (!debitSelect || !apportSection) return;
-
-      const isExpense = debitSelect.value.startsWith('5');
-      apportSection.style.display = isExpense ? 'block' : 'none';
-
-      if (!isExpense) return;
-
-      const usage = usageSelect.value;
-      const amount = Number(amountInput.value) || 0;
-
-      if (usage === 'business_only') {
-        ratioGroup.style.display = 'none';
-        detailsDiv.style.display = 'none';
-        ratioInput.value = 100;
-      } else if (usage === 'private_only') {
-        ratioGroup.style.display = 'none';
-        detailsDiv.style.display = 'block';
-        ratioInput.value = 0;
-        calcBiz.textContent = '0円';
-        calcPriv.textContent = amount.toLocaleString() + '円';
-      } else if (usage === 'mixed') {
-        ratioGroup.style.display = 'block';
-        detailsDiv.style.display = 'block';
-        let ratio = Number(ratioInput.value);
-        if (ratio < 0) ratio = 0;
-        if (ratio > 100) ratio = 100;
-        const privateRatio = 100 - ratio;
-        const adjAmount = Math.round(amount * (privateRatio / 100));
-        const bizAmount = amount - adjAmount;
-
-        calcBiz.textContent = bizAmount.toLocaleString() + '円';
-        calcPriv.textContent = adjAmount.toLocaleString() + '円';
-      }
-    };
-
-    if (debitSelect) debitSelect.addEventListener('change', updateApportionmentUI);
-    if (usageSelect) usageSelect.addEventListener('change', updateApportionmentUI);
-    if (amountInput) amountInput.addEventListener('input', updateApportionmentUI);
-    if (ratioInput) ratioInput.addEventListener('input', updateApportionmentUI);
-
-    updateApportionmentUI();
+    // Nothing to do here for now
   }, 50);
 
   // --- 入力履歴オートコンプリート（サジェスト）と自動反映の準備 ---
@@ -690,26 +608,6 @@ function openTransactionModal(existingTx = null) {
       return;
     }
 
-    let usageType = 'business_only';
-    let businessUseRatio = 100;
-    let apportionmentMethod = 'fixed_ratio';
-    let apportionmentMemo = '';
-
-    if (debitAccount.startsWith('5')) {
-      usageType = document.getElementById('tx-usage-type').value;
-      if (usageType === 'mixed') {
-        businessUseRatio = Number(document.getElementById('tx-business-ratio').value);
-        apportionmentMemo = document.getElementById('tx-apportionment-memo').value.trim();
-        if (!apportionmentMemo && businessUseRatio !== 100 && businessUseRatio !== 0) {
-          showToast('家事按分の場合、按分根拠メモは必須です', 'error');
-          return;
-        }
-      } else if (usageType === 'private_only') {
-        businessUseRatio = 0;
-        apportionmentMemo = document.getElementById('tx-apportionment-memo').value.trim();
-      }
-    }
-
     const txData = {
       id: isEditing ? existingTx.id : generateId(),
       date,
@@ -718,12 +616,7 @@ function openTransactionModal(existingTx = null) {
       amount,
       description,
       partner,
-      tags,
-      usageType,
-      businessUseRatio,
-      apportionmentMethod,
-      apportionmentMemo,
-      apportionmentOffsetAccountCode: '1005'
+      tags
     };
 
     // 編集時は元の調整仕訳IDを引き継ぐ

@@ -73,12 +73,12 @@ export function onTrialBalanceMount() {
           debit.balance += isDebitPlus ? tx.amount : -tx.amount;
         }
         if (credit) {
-          const isCreditPlus = ['liability', 'equity', 'revenue'].includes(credit.category);
+          const isCreditPlus = ['liability', 'equity', 'income'].includes(credit.category);
           credit.balance += isCreditPlus ? tx.amount : -tx.amount;
         }
       });
 
-      const categoryOrder = { 'asset': 1, 'liability': 2, 'equity': 3, 'revenue': 4, 'expense': 5 };
+      const categoryOrder = { 'asset': 1, 'liability': 2, 'equity': 3, 'income': 4, 'expense': 5 };
       const activeBalances = Object.values(balances)
         .filter(b => b.balance !== 0)
         .sort((a, b) => {
@@ -161,13 +161,13 @@ async function updateTrialBalanceUI() {
     }
 
     if (credit) {
-      const isCreditPlus = ['liability', 'equity', 'revenue'].includes(credit.category);
+      const isCreditPlus = ['liability', 'equity', 'income'].includes(credit.category);
       credit.balance += isCreditPlus ? tx.amount : -tx.amount;
     }
   });
 
   // 残高がある科目のみ抽出し、区分順・コード順でソート
-  const categoryOrder = { 'asset': 1, 'liability': 2, 'equity': 3, 'revenue': 4, 'expense': 5 };
+  const categoryOrder = { 'asset': 1, 'liability': 2, 'equity': 3, 'income': 4, 'expense': 5 };
 
   const activeBalances = Object.values(balances)
     .filter(b => b.balance !== 0)

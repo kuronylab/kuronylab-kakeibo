@@ -18,7 +18,7 @@ export function renderSidebar() {
       </div>
       <div class="sidebar-logo-text">
         <span class="sidebar-logo-name">KURONYLAB</span>
-        <span class="sidebar-logo-label">Manager</span>
+        <span class="sidebar-logo-label">Kakeibo</span>
       </div>
     </a>
     
@@ -52,26 +52,14 @@ export function renderSidebar() {
       </div>
 
       <div class="sidebar-section">
-        <div class="sidebar-section-title">決算・申告</div>
+        <div class="sidebar-section-title">集計・レポート</div>
         <a href="#pl" class="sidebar-link">
           <div class="sidebar-link-icon">📈</div>
-          <span>損益計算書</span>
+          <span>収支レポート</span>
         </a>
         <a href="#bs" class="sidebar-link">
           <div class="sidebar-link-icon">🏛️</div>
-          <span>貸借対照表</span>
-        </a>
-        <a href="#tax-summary" class="sidebar-link">
-          <div class="sidebar-link-icon">📄</div>
-          <span>確定申告サマリー</span>
-        </a>
-        <a href="#inventory" class="sidebar-link">
-          <div class="sidebar-link-icon">🗃️</div>
-          <span>棚卸資産（在庫なし可）</span>
-        </a>
-        <a href="#depreciation" class="sidebar-link">
-          <div class="sidebar-link-icon">🖩</div>
-          <span>減価償却</span>
+          <span>資産・負債状況</span>
         </a>
       </div>
 

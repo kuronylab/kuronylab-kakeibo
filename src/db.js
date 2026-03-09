@@ -85,37 +85,13 @@ class Database {
         // デフォルト設定の投入
         settingsStore.put({
             id: 'profile',
-            businessName: 'KURONYLAB',
-            taxpayerName: '黒木 皓基',
-            industryType: 'Webショップ運営代行・業務委託',
-            taxReturnMethod: 'blue',
-            blueReturnDeduction: 650000
+            businessName: '黒木家の家計簿',
+            taxpayerName: '黒木 皓基'
         });
     }
 
-    migrateDataV4(db) {
-        console.log('Migrating data to V4 (Apportionment Initialization)...');
-        // We open a new transaction for the migration
-        const transaction = db.transaction(['transactions'], 'readwrite');
-        const store = transaction.objectStore('transactions');
-        const request = store.getAll();
-
-        request.onsuccess = (e) => {
-            const txs = e.target.result;
-            txs.forEach(tx => {
-                // 借方が 5 始まり（費用）で利用区分が未設定の場合
-                if (tx.debitAccount && tx.debitAccount.startsWith('5') && !tx.usageType && !tx.isApportionmentAdjustment) {
-                    tx.usageType = 'business_only';
-                    tx.businessUseRatio = 100;
-                    store.put(tx);
-                }
-            });
-            console.log('V4 Migration complete.');
-        };
-        request.onerror = (e) => {
-            console.error('V4 Migration failed:', e);
-        };
-    }
+    // 移行ロジック削除
+    migrateDataV4(db) { }
 
     // --- Transactions (取引) ---
 
@@ -184,12 +160,7 @@ class Database {
                         description: sub.description + ' (自動記帳)',
                         partner: sub.partner || '',
                         tags: sub.tags || '',
-                        subscriptionId: sub.id,
-                        usageType: sub.usageType || 'business_only',
-                        businessUseRatio: sub.businessUseRatio !== undefined ? sub.businessUseRatio : 100,
-                        apportionmentMethod: sub.apportionmentMethod || 'fixed_ratio',
-                        apportionmentMemo: sub.apportionmentMemo || '',
-                        apportionmentOffsetAccountCode: sub.apportionmentOffsetAccountCode || '1005'
+                        subscriptionId: sub.id
                     };
 
                     await this.addTransaction(tx);
@@ -224,41 +195,13 @@ class Database {
                 updatedAt: new Date().toISOString()
             };
 
-            let adjTx = null;
-            if (data.usageType === 'mixed' || data.usageType === 'private_only') {
-                const ratio = data.usageType === 'private_only' ? 0 : Number(data.businessUseRatio || 0);
-                const privateRatio = 100 - ratio;
-                const adjAmount = Math.round(data.amount * (privateRatio / 100));
-
-                if (adjAmount > 0) {
-                    adjTx = {
-                        id: data.linkedAdjustmentEntryId || crypto.randomUUID(),
-                        date: data.date,
-                        yearMonth: data.yearMonth,
-                        debitAccount: data.apportionmentOffsetAccountCode || '1005', // 事業主貸
-                        creditAccount: data.debitAccount, // 経費の取り消し
-                        amount: adjAmount,
-                        description: `家事按分調整: ${data.description}`,
-                        isApportionmentAdjustment: true,
-                        parentTxId: data.id,
-                        createdAt: new Date().toISOString(),
-                        updatedAt: new Date().toISOString()
-                    };
-                    data.linkedAdjustmentEntryId = adjTx.id;
-                }
-            }
-
             store.add(data);
-            if (adjTx) {
-                store.add(adjTx);
-            }
 
             transaction.oncomplete = async () => {
                 // Supabase同期
                 const { data: { user } } = await supabase.auth.getUser();
                 if (user) {
                     this.syncTransactionToCloud(data, user.id);
-                    if (adjTx) this.syncTransactionToCloud(adjTx, user.id);
                 }
                 resolve(data);
             };
@@ -279,14 +222,6 @@ class Database {
             description: tx.description,
             partner: tx.partner,
             tags: tx.tags,
-            usage_type: tx.usageType,
-            business_use_ratio: tx.businessUseRatio,
-            apportionment_method: tx.apportionmentMethod,
-            apportionment_memo: tx.apportionmentMemo,
-            apportionment_offset_account_code: tx.apportionmentOffsetAccountCode,
-            is_apportionment_adjustment: tx.isApportionmentAdjustment || false,
-            parent_tx_id: tx.parentTxId,
-            linked_adjustment_entry_id: tx.linkedAdjustmentEntryId,
             updated_at: tx.updatedAt
         };
         await supabase.from('transactions').upsert(cloudData);
@@ -307,58 +242,12 @@ class Database {
                 updatedAt: new Date().toISOString()
             };
 
-            let adjTx = null;
-            let shouldDeleteAdjId = null;
-
-            if (data.usageType === 'mixed' || data.usageType === 'private_only') {
-                const ratio = data.usageType === 'private_only' ? 0 : Number(data.businessUseRatio || 0);
-                const privateRatio = 100 - ratio;
-                const adjAmount = Math.round(data.amount * (privateRatio / 100));
-
-                if (adjAmount > 0) {
-                    adjTx = {
-                        id: data.linkedAdjustmentEntryId || crypto.randomUUID(),
-                        date: data.date,
-                        yearMonth: data.yearMonth,
-                        debitAccount: data.apportionmentOffsetAccountCode || '1005',
-                        creditAccount: data.debitAccount,
-                        amount: adjAmount,
-                        description: `家事按分調整: ${data.description}`,
-                        isApportionmentAdjustment: true,
-                        parentTxId: data.id,
-                        updatedAt: new Date().toISOString()
-                    };
-                    if (!data.linkedAdjustmentEntryId) {
-                        adjTx.createdAt = new Date().toISOString();
-                    }
-                    data.linkedAdjustmentEntryId = adjTx.id;
-                } else {
-                    if (data.linkedAdjustmentEntryId) {
-                        shouldDeleteAdjId = data.linkedAdjustmentEntryId;
-                        data.linkedAdjustmentEntryId = null;
-                    }
-                }
-            } else {
-                if (data.linkedAdjustmentEntryId) {
-                    shouldDeleteAdjId = data.linkedAdjustmentEntryId;
-                    data.linkedAdjustmentEntryId = null;
-                }
-            }
-
             store.put(data);
-            if (adjTx) {
-                store.put(adjTx);
-            }
-            if (shouldDeleteAdjId) {
-                store.delete(shouldDeleteAdjId);
-            }
 
             transaction.oncomplete = async () => {
                 const { data: { user } } = await supabase.auth.getUser();
                 if (user) {
                     this.syncTransactionToCloud(data, user.id);
-                    if (adjTx) this.syncTransactionToCloud(adjTx, user.id);
-                    if (shouldDeleteAdjId) await supabase.from('transactions').delete().eq('id', shouldDeleteAdjId);
                 }
                 resolve(data);
             };
@@ -427,14 +316,6 @@ class Database {
                 description: ctx.description,
                 partner: ctx.partner || '',
                 tags: ctx.tags || '',
-                usageType: ctx.usage_type,
-                businessUseRatio: ctx.business_use_ratio,
-                apportionmentMethod: ctx.apportionment_method,
-                apportionmentMemo: ctx.apportionment_memo,
-                apportionmentOffsetAccountCode: ctx.apportionment_offset_account_code,
-                isApportionmentAdjustment: ctx.is_apportionment_adjustment,
-                parentTxId: ctx.parent_tx_id,
-                linkedAdjustmentEntryId: ctx.linked_adjustment_entry_id,
                 createdAt: ctx.created_at,
                 updatedAt: ctx.updated_at
             };

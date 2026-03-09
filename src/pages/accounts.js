@@ -5,10 +5,10 @@ import { renderModal, confirmDialog } from '../components/modal.js';
 import { showToast } from '../components/toast.js';
 
 export function renderAccounts() {
-    const container = document.createElement('div');
-    container.className = 'page-section animate-fade-in';
+  const container = document.createElement('div');
+  container.className = 'page-section animate-fade-in';
 
-    container.innerHTML = `
+  container.innerHTML = `
     <div class="toolbar">
       <div class="toolbar-left">
         <div class="search-wrapper">
@@ -19,7 +19,7 @@ export function renderAccounts() {
           <option value="asset">資産</option>
           <option value="liability">負債</option>
           <option value="equity">純資産</option>
-          <option value="revenue">収益</option>
+          <option value="income">収入</option>
           <option value="expense">費用</option>
         </select>
       </div>
@@ -50,56 +50,56 @@ export function renderAccounts() {
     </div>
   `;
 
-    return container;
+  return container;
 }
 
 export function onAccountsMount() {
-    if (window._currentUnsubscribe) window._currentUnsubscribe();
+  if (window._currentUnsubscribe) window._currentUnsubscribe();
 
-    const unsubscribe = store.subscribe(() => {
-        updateAccountsUI();
-    });
-    window._currentUnsubscribe = unsubscribe;
+  const unsubscribe = store.subscribe(() => {
+    updateAccountsUI();
+  });
+  window._currentUnsubscribe = unsubscribe;
 
-    // 新規追加ボタン
-    const addBtn = document.getElementById('btn-add-acc');
-    if (addBtn) addBtn.addEventListener('click', () => openAccountModal());
+  // 新規追加ボタン
+  const addBtn = document.getElementById('btn-add-acc');
+  if (addBtn) addBtn.addEventListener('click', () => openAccountModal());
 
-    // 検索・フィルタ入力
-    const searchInput = document.getElementById('acc-search');
-    const filterSelect = document.getElementById('acc-filter-category');
-    if (searchInput) searchInput.addEventListener('input', updateAccountsUI);
-    if (filterSelect) filterSelect.addEventListener('change', updateAccountsUI);
+  // 検索・フィルタ入力
+  const searchInput = document.getElementById('acc-search');
+  const filterSelect = document.getElementById('acc-filter-category');
+  if (searchInput) searchInput.addEventListener('input', updateAccountsUI);
+  if (filterSelect) filterSelect.addEventListener('change', updateAccountsUI);
 }
 
 function updateAccountsUI() {
-    const { accounts, isLoading } = store.state;
-    const listContainer = document.getElementById('acc-list');
-    const searchInput = document.getElementById('acc-search');
-    const filterSelect = document.getElementById('acc-filter-category');
+  const { accounts, isLoading } = store.state;
+  const listContainer = document.getElementById('acc-list');
+  const searchInput = document.getElementById('acc-search');
+  const filterSelect = document.getElementById('acc-filter-category');
 
-    if (!listContainer || isLoading) return;
+  if (!listContainer || isLoading) return;
 
-    const keyword = searchInput ? searchInput.value.toLowerCase() : '';
-    const category = filterSelect ? filterSelect.value : '';
+  const keyword = searchInput ? searchInput.value.toLowerCase() : '';
+  const category = filterSelect ? filterSelect.value : '';
 
-    // フィルタリングとソート（コード昇順）
-    const filteredAccs = accounts.filter(acc => {
-        if (category && acc.category !== category) return false;
-        if (!keyword) return true;
-        return acc.code.includes(keyword) || acc.name.toLowerCase().includes(keyword);
-    }).sort((a, b) => a.code.localeCompare(b.code));
+  // フィルタリングとソート（コード昇順）
+  const filteredAccs = accounts.filter(acc => {
+    if (category && acc.category !== category) return false;
+    if (!keyword) return true;
+    return acc.code.includes(keyword) || acc.name.toLowerCase().includes(keyword);
+  }).sort((a, b) => a.code.localeCompare(b.code));
 
-    if (filteredAccs.length === 0) {
-        listContainer.innerHTML = `
+  if (filteredAccs.length === 0) {
+    listContainer.innerHTML = `
       <tr><td colspan="5" class="text-center text-muted" style="padding: 3rem;">
         該当する勘定科目がありません。
       </td></tr>
     `;
-        return;
-    }
+    return;
+  }
 
-    const accsHTML = filteredAccs.map(acc => `
+  const accsHTML = filteredAccs.map(acc => `
     <tr>
       <td class="text-mono font-bold">${acc.code}</td>
       <td class="font-bold">${acc.name}</td>
@@ -111,22 +111,22 @@ function updateAccountsUI() {
     </tr>
   `).join('');
 
-    listContainer.innerHTML = accsHTML;
+  listContainer.innerHTML = accsHTML;
 
-    // 編集イベントリスナーの登録
-    document.querySelectorAll('.btn-edit-acc').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const code = e.target.dataset.code;
-            const acc = accounts.find(a => a.code === code);
-            if (acc) openAccountModal(acc);
-        });
+  // 編集イベントリスナーの登録
+  document.querySelectorAll('.btn-edit-acc').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const code = e.target.dataset.code;
+      const acc = accounts.find(a => a.code === code);
+      if (acc) openAccountModal(acc);
     });
+  });
 }
 
 function openAccountModal(existingAcc = null) {
-    const isEditing = !!existingAcc;
+  const isEditing = !!existingAcc;
 
-    const bodyHtml = `
+  const bodyHtml = `
     <form id="acc-form">
       <div class="form-row">
         <div class="form-group">
@@ -143,7 +143,7 @@ function openAccountModal(existingAcc = null) {
             <option value="asset" ${isEditing && existingAcc.category === 'asset' ? 'selected' : ''}>資産</option>
             <option value="liability" ${isEditing && existingAcc.category === 'liability' ? 'selected' : ''}>負債</option>
             <option value="equity" ${isEditing && existingAcc.category === 'equity' ? 'selected' : ''}>純資産</option>
-            <option value="revenue" ${isEditing && existingAcc.category === 'revenue' ? 'selected' : ''}>収益</option>
+            <option value="income" ${isEditing && existingAcc.category === 'income' ? 'selected' : ''}>収入</option>
             <option value="expense" ${isEditing && existingAcc.category === 'expense' ? 'selected' : ''}>費用</option>
           </select>
         </div>
@@ -161,74 +161,74 @@ function openAccountModal(existingAcc = null) {
     </form>
   `;
 
-    const footerHtml = `
+  const footerHtml = `
     <button class="btn btn-secondary" id="acc-modal-cancel">キャンセル</button>
     <button class="btn btn-primary" id="acc-modal-save">${isEditing ? '更新する' : '登録する'}</button>
   `;
 
-    const close = renderModal({
-        title: isEditing ? '勘定科目の編集' : '新規勘定科目の追加',
-        body: bodyHtml,
-        footer: footerHtml
+  const close = renderModal({
+    title: isEditing ? '勘定科目の編集' : '新規勘定科目の追加',
+    body: bodyHtml,
+    footer: footerHtml
+  });
+
+  document.getElementById('acc-modal-cancel').addEventListener('click', close);
+
+  // カテゴリ自動設定ロジック（コード入力時）
+  if (!isEditing) {
+    document.getElementById('acc-code').addEventListener('input', (e) => {
+      const code = e.target.value;
+      if (code.length >= 1) {
+        const firstDigit = code.charAt(0);
+        const select = document.getElementById('acc-category');
+        if (firstDigit === '1') select.value = 'asset';
+        else if (firstDigit === '2') select.value = 'liability';
+        else if (firstDigit === '3') select.value = 'equity';
+        else if (firstDigit === '4') select.value = 'income';
+        else if (firstDigit === '5') select.value = 'expense';
+      }
     });
+  }
 
-    document.getElementById('acc-modal-cancel').addEventListener('click', close);
-
-    // カテゴリ自動設定ロジック（コード入力時）
-    if (!isEditing) {
-        document.getElementById('acc-code').addEventListener('input', (e) => {
-            const code = e.target.value;
-            if (code.length >= 1) {
-                const firstDigit = code.charAt(0);
-                const select = document.getElementById('acc-category');
-                if (firstDigit === '1') select.value = 'asset';
-                else if (firstDigit === '2') select.value = 'liability';
-                else if (firstDigit === '3') select.value = 'equity';
-                else if (firstDigit === '4') select.value = 'revenue';
-                else if (firstDigit === '5') select.value = 'expense';
-            }
-        });
+  document.getElementById('acc-modal-save').addEventListener('click', async () => {
+    const form = document.getElementById('acc-form');
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      return;
     }
 
-    document.getElementById('acc-modal-save').addEventListener('click', async () => {
-        const form = document.getElementById('acc-form');
-        if (!form.checkValidity()) {
-            form.reportValidity();
-            return;
-        }
+    const code = document.getElementById('acc-code').value;
+    const categorySelector = document.getElementById('acc-category');
+    // disabled対応のためisEditingをチェック
+    const category = isEditing ? existingAcc.category : categorySelector.value;
+    const name = document.getElementById('acc-name').value;
+    const typeStr = document.getElementById('acc-type').value;
 
-        const code = document.getElementById('acc-code').value;
-        const categorySelector = document.getElementById('acc-category');
-        // disabled対応のためisEditingをチェック
-        const category = isEditing ? existingAcc.category : categorySelector.value;
-        const name = document.getElementById('acc-name').value;
-        const typeStr = document.getElementById('acc-type').value;
+    // 新規登録の場合の重複チェック
+    if (!isEditing && store.state.accounts.some(a => a.code === code)) {
+      showToast('この科目コードは既に使用されています', 'error');
+      return;
+    }
 
-        // 新規登録の場合の重複チェック
-        if (!isEditing && store.state.accounts.some(a => a.code === code)) {
-            showToast('この科目コードは既に使用されています', 'error');
-            return;
-        }
+    const accData = {
+      code,
+      category,
+      name,
+      type: typeStr || getCategoryLabel(category)
+    };
 
-        const accData = {
-            code,
-            category,
-            name,
-            type: typeStr || getCategoryLabel(category)
-        };
+    try {
+      await db.saveAccount(accData);
 
-        try {
-            await db.saveAccount(accData);
+      // Storeの更新を手動で呼び出し
+      const updatedAccounts = await db.getAccounts();
+      store.setState({ accounts: updatedAccounts });
 
-            // Storeの更新を手動で呼び出し
-            const updatedAccounts = await db.getAccounts();
-            store.setState({ accounts: updatedAccounts });
-
-            showToast(`科目を${isEditing ? '更新' : '登録'}しました`, 'success');
-            close();
-        } catch (e) {
-            console.error(e);
-            showToast('エラーが発生しました', 'error');
-        }
-    });
+      showToast(`科目を${isEditing ? '更新' : '登録'}しました`, 'success');
+      close();
+    } catch (e) {
+      console.error(e);
+      showToast('エラーが発生しました', 'error');
+    }
+  });
 }

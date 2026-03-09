@@ -46,7 +46,7 @@ export function onBSMount() {
       const txs = await db.getTransactionsByYear(currentYear);
       const { exportToCSV } = await import('../utils/export.js');
 
-      const balances = { asset: {}, liability: {}, equity: {}, revenue: {}, expense: {} };
+      const balances = { asset: {}, liability: {}, equity: {}, income: {}, expense: {} };
       accounts.forEach(acc => { balances[acc.category][acc.code] = { name: acc.name, balance: 0 }; });
 
       txs.forEach(tx => {
@@ -58,12 +58,12 @@ export function onBSMount() {
           else balances[debit.category][debit.code].balance -= tx.amount;
         }
         if (credit) {
-          if (['liability', 'equity', 'revenue'].includes(credit.category)) balances[credit.category][credit.code].balance += tx.amount;
+          if (['liability', 'equity', 'income'].includes(credit.category)) balances[credit.category][credit.code].balance += tx.amount;
           else balances[credit.category][credit.code].balance -= tx.amount;
         }
       });
 
-      const totalRevenue = Object.values(balances.revenue).reduce((sum, item) => sum + item.balance, 0);
+      const totalRevenue = Object.values(balances.income).reduce((sum, item) => sum + item.balance, 0);
       const totalExpense = Object.values(balances.expense).reduce((sum, item) => sum + item.balance, 0);
       const netIncome = totalRevenue - totalExpense;
 
@@ -90,7 +90,7 @@ export function onBSMount() {
 
       data.push({ '区分': '【純資産の部】', '科目': '', '金額': '' });
       activeEquity.forEach(item => data.push({ '区分': '', '科目': item.name, '金額': item.balance }));
-      data.push({ '区分': '', '科目': '青色申告特別控除前の所得金額', '金額': netIncome });
+      data.push({ '区分': '', '科目': '当期収支', '金額': netIncome });
       data.push({ '区分': '純資産の部 合計', '科目': '', '金額': totalEquity });
 
       data.push({ '区分': '', '科目': '', '金額': '' });
@@ -116,8 +116,8 @@ async function updateBSUI() {
     asset: {},
     liability: {},
     equity: {},
-    revenue: {}, // P/L計算用
-    expense: {}  // P/L計算用
+    income: {}, // 集計用
+    expense: {}  // 集計用
   };
 
   accounts.forEach(acc => {
@@ -135,15 +135,15 @@ async function updateBSUI() {
       else balances[debit.category][debit.code].balance -= tx.amount;
     }
 
-    // 貸方は負債・純資産・収益が増加、資産・費用が減少
+    // 貸方は負債・純資産・収入が増加、資産・費用が減少
     if (credit) {
-      if (['liability', 'equity', 'revenue'].includes(credit.category)) balances[credit.category][credit.code].balance += tx.amount;
+      if (['liability', 'equity', 'income'].includes(credit.category)) balances[credit.category][credit.code].balance += tx.amount;
       else balances[credit.category][credit.code].balance -= tx.amount;
     }
   });
 
-  // 当期純利益（青色申告特別控除前）の計算
-  const totalRevenue = Object.values(balances.revenue).reduce((sum, item) => sum + item.balance, 0);
+  // 当期収支の計算
+  const totalRevenue = Object.values(balances.income).reduce((sum, item) => sum + item.balance, 0);
   const totalExpense = Object.values(balances.expense).reduce((sum, item) => sum + item.balance, 0);
   const netIncome = totalRevenue - totalExpense;
 
@@ -217,7 +217,7 @@ async function updateBSUI() {
     <div class="font-bold text-muted mb-sm mt-lg text-sm">純資産（資本）</div>
     ${equityHtml}
     <div class="statement-row text-emerald">
-      <div class="statement-label">青色申告特別控除前の所得金額</div>
+      <div class="statement-label">今期の純収支</div>
       <div class="statement-amount">${formatCurrency(netIncome)}</div>
     </div>
     <div class="statement-row total mb-md">

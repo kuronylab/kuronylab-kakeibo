@@ -161,8 +161,8 @@ async function updateDashboardUI() {
     const isCurrentMonthTx = (txMonthZeroIndexed === currentMonth - 1);
     const belongsToCurrentView = currentDashboardView === 'year' || isCurrentMonthTx;
 
-    // 売上等
-    if (creditAccount?.category === 'revenue') {
+    // 収入等
+    if (creditAccount?.category === 'income') {
       if (belongsToCurrentView) totalIncome += tx.amount;
       monthlyData.incomes[txMonthZeroIndexed] += tx.amount;
     }
@@ -223,7 +223,7 @@ async function updateDashboardUI() {
       
       <div class="card summary-card profit">
         <div class="card-header">
-          <h3 class="card-title">${titlePrefix} 利益</h3>
+          <h3 class="card-title">${titlePrefix} 純収支</h3>
           <div class="card-icon profit">✨</div>
         </div>
         <div class="card-value ${profit >= 0 ? 'text-emerald' : 'text-rose'}" data-target="${profit}">¥0</div>
