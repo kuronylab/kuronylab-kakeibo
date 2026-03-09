@@ -53,12 +53,15 @@ ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE subscriptions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE settings ENABLE ROW LEVEL SECURITY;
 
--- ポリシーの作成 (自分自身のデータのみアクセス可能)
+-- ポリシーの作成 (再実行可能なようにDROPしてからCREATE)
+DROP POLICY IF EXISTS "Users can manage their own transactions" ON transactions;
 CREATE POLICY "Users can manage their own transactions" ON transactions
   FOR ALL USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can manage their own subscriptions" ON subscriptions;
 CREATE POLICY "Users can manage their own subscriptions" ON subscriptions
   FOR ALL USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can manage their own settings" ON settings;
 CREATE POLICY "Users can manage their own settings" ON settings
   FOR ALL USING (auth.uid() = user_id);
