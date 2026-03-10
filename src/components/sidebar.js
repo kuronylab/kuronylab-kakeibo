@@ -18,7 +18,7 @@ export function renderSidebar() {
       </div>
       <div class="sidebar-logo-text">
         <span class="sidebar-logo-name">KURONYLAB</span>
-        <span class="sidebar-logo-label">Kakeibo</span>
+        <span class="sidebar-logo-label">家計簿</span>
       </div>
     </a>
     

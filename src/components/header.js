@@ -125,11 +125,11 @@ export function renderHeader() {
             'journal': '仕訳帳',
             'ledger': '総勘定元帳',
             'trial-balance': '残高試算表',
-            'pl': '損益計算書',
-            'bs': '貸借対照表',
+            'pl': '収支レポート',
+            'bs': '資産・負債状況',
             'tax-summary': '確定申告サマリー',
             'accounts': '勘定科目設定',
-            'settings': '事業者設定'
+            'settings': '設定'
         };
 
         const pageTitle = document.getElementById('page-title');
