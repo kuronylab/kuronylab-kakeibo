@@ -74,6 +74,16 @@ export function renderSidebar() {
           <span>事業者設定</span>
         </a>
       </div>
+
+      ${store.state.settings.otherAppUrl ? `
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">アプリ切り替え</div>
+        <a href="${store.state.settings.otherAppUrl}" class="sidebar-link" style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2);">
+          <div class="sidebar-link-icon">🔄</div>
+          <span class="font-bold" style="color: var(--success-color);">帳簿へ切り替え</span>
+        </a>
+      </div>
+      ` : ''}
     </nav>
     
     <div class="sidebar-footer">

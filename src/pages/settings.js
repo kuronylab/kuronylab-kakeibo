@@ -49,6 +49,12 @@ export function renderSettings() {
             <input type="text" id="set-business-name" class="form-input" placeholder="例: 黒木家の家計簿">
           </div>
           
+          <div class="form-group">
+            <label class="form-label">他アプリのURL (帳簿など)</label>
+            <input type="url" id="set-other-app-url" class="form-input" placeholder="https://example-chobo.vercel.app">
+            <small class="text-xs text-muted">アプリ切り替えボタンの遷移先URLを入力します</small>
+          </div>
+          
           <button type="button" class="btn btn-primary mt-md" id="btn-save-settings">設定を保存する</button>
         </form>
       <!-- 自動記帳（サブスクリプション）設定 -->
@@ -183,6 +189,7 @@ export function onSettingsMount() {
 
     setVal('set-business-name', settings.businessName || '');
     setVal('set-taxpayer-name', settings.taxpayerName || '');
+    setVal('set-other-app-url', settings.otherAppUrl || '');
   };
 
   const unsubscribe = store.subscribe(() => {
@@ -200,7 +207,8 @@ export function onSettingsMount() {
       const newSettings = {
         ...store.state.settings,
         businessName: document.getElementById('set-business-name').value,
-        taxpayerName: document.getElementById('set-taxpayer-name').value
+        taxpayerName: document.getElementById('set-taxpayer-name').value,
+        otherAppUrl: document.getElementById('set-other-app-url').value
       };
 
       try {
