@@ -340,7 +340,7 @@ class Database {
         const localOnlyTxs = allLocalTxs.filter(tx => !cloudIds.has(tx.id));
 
         if (localOnlyTxs.length > 0) {
-            console.log(`Syncing ${localOnlyTxs.length} local-only transactions to cloud...`);
+            
             for (const tx of localOnlyTxs) {
                 await this.syncTransactionToCloud(tx, user.id);
             }
